@@ -2,7 +2,7 @@
 use std::alloc::{alloc, dealloc, Layout};
 use std::ptr::copy_nonoverlapping as copy;
 use std::fmt::{Debug, Formatter, Result as FmtResult};
-use crate::coder::*;
+use crate::parser::*;
 
 //* NOTE(IMPORTANT): DON'T DERIVE CLONE, IT WILL FREE TWICE AND WILL CREATE TWO POINTERS TO THE SAME DATA
 #[allow(dead_code)]

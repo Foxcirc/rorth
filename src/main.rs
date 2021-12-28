@@ -2,7 +2,7 @@
 #[cfg(test)]
 mod tests;
 mod lexer;
-mod coder;
+mod parser;
 mod sim;
 
 #[allow(dead_code)]
@@ -29,13 +29,13 @@ fn main() {
     // .emit();
 
     let tokens = lexer::Lexer::new(&code).build().unwrap();
-    let prog = coder::Coder::new(tokens).build().unwrap();
+    let (code, env) = parser::Parser::new(tokens).build().unwrap();
 
-    Diag::info(&format!("simulating {}", &path));
+    Diag::info("starting in simulation mode");
 
     let mut sim = sim::Simulator::new();
-    sim.setup(prog.1, prog.2, prog.3);
-    sim.run(prog.0);
+    sim.setup(env);
+    sim.run(code);
 
     for value in sim.stack.iter() {
         println!("{:?}", value.view());

@@ -1,20 +1,20 @@
 
 use std::collections::HashMap;
 use crate::lexer::*;
-use crate::coder::*;
+use crate::parser::*;
 
 pub(crate) type TypeID = u32;
 pub(crate) type Procedures = HashMap<String /* todo use &str + one big string to be more efficient (maybe?) */, Procedure>;
 pub(crate) type Constants = HashMap<TypeID, Constant>;
 pub(crate) type Structures = Vec<Structure>;
 pub(crate) type StructureNames = HashMap<String /* did you know this ^^ counts for the `Value`s too? (and for `Structure`s :O) */, TypeID>;
-pub(crate) type Program = (Bytecode, Constants, Procedures, Structures);
+pub(crate) type Environment = (Constants, Procedures, Structures);
 
-pub(crate) struct Coder<'a> {
+pub(crate) struct Parser<'a> {
     tokens: Tokenstream<'a>,
 }
 
-impl<'a> Coder<'a> {
+impl<'a> Parser<'a> {
     
     pub(crate) fn new(tokens: Tokenstream<'a>) -> Self {
         
@@ -22,7 +22,7 @@ impl<'a> Coder<'a> {
 
     }
 
-    pub(crate) fn build(self) -> Result<Program, ()> {
+    pub(crate) fn build(self) -> Result<(Bytecode, Environment), ()> {
 
         let program = self.parse();
 
@@ -32,7 +32,7 @@ impl<'a> Coder<'a> {
 
     }
 
-    fn parse(&self) -> Program {
+    fn parse(&self) -> (Bytecode, Environment) {
         
         use Tokenkind::*;
         use Instruction as Ins;
@@ -72,31 +72,17 @@ impl<'a> Coder<'a> {
                     bcode.push(Ins::Push(Value::make(0, &structs[0], value.to_ne_bytes())));
                 },
 
+                Comment | Note => (),
+
                 other => todo!("This token is not implemented yet: {:?}", other),
 
             }
 
         };
 
-        (bcode, consts, procs, structs)
+        return (bcode, (consts, procs, structs))
 
     }
-
-    // fn check(&self, program: &Program) {
-
-    //     // use Instruction as Ins;
-
-    //     // let mut stack: Vec<TypeID> = Vec::new();
-
-    //     for instr in program.0.iter() {
-
-    //         match instr {
-    //             other => todo!("This instruction is not implemented for meta evaluation: {:?}", other),
-    //         }
-
-    //     }
-
-    // }
 
 }
 

@@ -1,7 +1,7 @@
 
 use std::ops::{Deref, DerefMut};
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
-use crate::coder::*;
+use crate::parser::*;
 
 #[derive(Debug)]
 pub(crate) enum Instruction {

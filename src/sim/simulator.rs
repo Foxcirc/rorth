@@ -1,5 +1,5 @@
 
-use crate::coder::*;
+use crate::parser::*;
 use crate::sim::*;
 
 pub(crate) type Stack = Vec<Value>;
@@ -22,7 +22,7 @@ impl Simulator {
         }
     }
 
-    pub(crate) fn setup(&mut self, consts: Constants, procs: Procedures, structs: Structures) {
+    pub(crate) fn setup(&mut self, (consts, procs, structs): Environment) {
         self.consts = consts;
         self.procs = procs;
         self.structs = structs;

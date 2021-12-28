@@ -1,2 +1,11 @@
 
-34 35 +=
+34 35 += 420
+
+`implement:
+1. Syntax grammar (better parsing)
+2. if/else
+3. structs
+4. primitive types through structs
+5. stack slicing
+6. intrinsics through stack slicing
+`

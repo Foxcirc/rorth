@@ -1,6 +1,6 @@
 
 #[allow(unused_assignments)]
-pub(crate) mod coder;
+pub(crate) mod parser;
 
 pub(crate) mod bytecode;
 pub(crate) mod procedure;
@@ -9,7 +9,7 @@ pub(crate) mod structure;
 pub(crate) mod value;
 
 pub(crate) use {
-    coder::*,
+    parser::*,
     bytecode::*,
     procedure::*,
     constant::*,
