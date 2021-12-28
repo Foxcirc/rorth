@@ -1,0 +1,9 @@
+[package]
+name = "rorth"
+version = "0.1.2"
+edition = "2021"
+
+[dependencies]
+enumflags2 = "*"
+fancy = "0.2.3"
+# fancyer = "*"
