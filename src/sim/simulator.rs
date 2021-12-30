@@ -9,6 +9,7 @@ pub(crate) struct Simulator {
     consts: Constants,
     procs: Procedures,
     structs: Structures,
+    isinit: bool,
 }
 
 impl Simulator {
@@ -18,7 +19,8 @@ impl Simulator {
             stack: Stack::new(),
             consts: Constants::new(),
             procs: Procedures::new(),
-            structs: Structures::new()
+            structs: Structures::new(),
+            isinit: false,
         }
     }
 
@@ -26,9 +28,12 @@ impl Simulator {
         self.consts = consts;
         self.procs = procs;
         self.structs = structs;
+        self.isinit = true;
     }
 
     pub(crate) fn run(&mut self, bcode: Bytecode) {
+
+        assert!(self.isinit);
 
         use Instruction::*;
 

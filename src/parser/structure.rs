@@ -30,7 +30,7 @@ impl Structure {
         }
     }
 
-    pub(crate) fn primitive(align: u8, size: u16) -> Self {
+    pub(crate) fn primitive(size: u16, align: u8) -> Self {
         Self {
             layout: Vec::new(),
             size,

@@ -1,7 +1,6 @@
 
 use std::collections::HashMap;
-use crate::lexer::*;
-use crate::parser::*;
+use crate::*;
 
 pub(crate) type TypeID = u32;
 pub(crate) type Procedures = HashMap<String /* todo use &str + one big string to be more efficient (maybe?) */, Procedure>;
@@ -10,80 +9,149 @@ pub(crate) type Structures = Vec<Structure>;
 pub(crate) type StructureNames = HashMap<String /* did you know this ^^ counts for the `Value`s too? (and for `Structure`s :O) */, TypeID>;
 pub(crate) type Environment = (Constants, Procedures, Structures);
 
-pub(crate) struct Parser<'a> {
-    tokens: Tokenstream<'a>,
+pub(crate) struct Parser {
+    grammar: Option<Node>,
 }
 
-impl<'a> Parser<'a> {
+impl Parser {
     
-    pub(crate) fn new(tokens: Tokenstream<'a>) -> Self {
+    pub(crate) fn new() -> Self {
         
-        Self { tokens }
+        Self { grammar: None }
 
     }
 
-    pub(crate) fn build(self) -> Result<(Bytecode, Environment), ()> {
+    pub(crate) fn build(mut self, tokens: Tokenstream) -> Result<(Bytecode, Environment), ()> {
 
-        let program = self.parse();
-
-        // self.check(&program);
-
+        self.setup(Self::defgrm());
+        let program = self.parse(tokens);
         Ok(program)
 
     }
 
-    fn parse(&self) -> (Bytecode, Environment) {
+    fn defgrm() -> Node {
+
+        use Tokenkind::*;
+
+        /* 
+        gmr![
+            proc: ["let", ident, "proc", ?(ident || ["(", ident*, ")"]) "in" &expr* ]
+        ]
+        */
+
+        // let expr = Node::Labeled("expr", Box::new(
+        //     Node::Value("expr", Ident),
+        // ));
+
+        let proc = Node::Labeled("proc", Box::new(
+            Node::Complex(vec![
+                Node::Key("let"),
+                Node::Value("name", Ident),
+                Node::Key("proc"),
+                /* arguments */
+                Node::Optional(Box::new(Node::Multiple(vec![
+                    Node::Value("args", Ident),
+                    Node::Complex(vec![
+                        Node::Key("("),
+                        Node::Repeat(Box::new(Node::Value("args", Ident))),
+                        Node::Key(")"),
+                    ])
+                ]))),
+                /* returns */
+                Node::Optional(Box::new(Node::Complex(vec![
+                    Node::Key("-"),
+                    Node::Multiple(vec![
+                    Node::Value("rets", Ident),
+                    Node::Complex(vec![
+                        Node::Key("("),
+                        Node::Repeat(Box::new(Node::Value("rets", Ident))),
+                        Node::Key(")"),
+                    ])
+                ])]))),
+                /* body */
+                Node::Key("in"),
+                Node::Repeat(Box::new(Node::Value("expr", Ident))),
+                Node::Key("end"),
+            ]))
+        );
+
+        let grammar = Node::Multiple(vec![
+            proc,
+        ]);
+
+        grammar
+    }
+
+    pub(crate) fn setup(&mut self, grammar: Node) {
+        self.grammar = Some(grammar);
+    }
+
+    pub(crate) fn parse(&self, tokens: Tokenstream) -> (Bytecode, Environment) {
         
         use Tokenkind::*;
         use Instruction as Ins;
         
         macro_rules! initps { ($($name:ident($align:literal, $size:literal)),*) => { {
             let mut items = Vec::new(); let mut names = StructureNames::new(); let mut count = 0;
-            $(items.push(Structure::primitive($align, $size)); names.insert(stringify!($name).to_owned(), count); count += 1; )*
+            $(items.push(Structure::primitive($size, $align)); names.insert(stringify!($name).to_owned(), count); count += 1; )*
             (items, names)
         } }; }
 
-        let tokens = &self.tokens;
         let mut bcode = Bytecode::new(0);
         let consts = Constants::new();
         let procs = Procedures::new();
         let (structs, _names) = initps![int(8, 8), bool(2, 2), ref(8, 8)];
 
-        for token in tokens.iter() {
+        // let isvalid = Self::validgrm(self.grammar.as_ref().aborts("The grammar must be set before parsing."));
+        // if !isvalid {
+        //     Diag::fatal("The grammar is not valid.");
+        // }
 
-            match token.kind {
+        todo!();
 
-                Newline => (),
-
-                PlusEquals  => bcode.push(Ins::Add),
-                MinusEquals => bcode.push(Ins::Subtract),
-                StarEquals  => bcode.push(Ins::Multiply),
-                SlashEquals => bcode.push(Ins::Divide),
-                // todo add TokenKind::Keyword to simlify checks for "naming things after intrinsics": Eg. "let drop bind int"
-                Ident if tokens.iskwd(token, "dup")  => { bcode.push(Ins::Dup)      },
-                Ident if tokens.iskwd(token, "swap") => { bcode.push(Ins::Swap)     },
-                Ident if tokens.iskwd(token, "over") => { bcode.push(Ins::Over)     },
-                Ident if tokens.iskwd(token, "drop") => { bcode.push(Ins::Drop)     },
-                Ident if tokens.iskwd(token, "rotl") => { bcode.push(Ins::RotLeft)  },
-                Ident if tokens.iskwd(token, "rotr") => { bcode.push(Ins::RotRight) },
-
-                Integer => {
-                    let value = tokens.read(&token).integer();
-                    bcode.push(Ins::Push(Value::make(0, &structs[0], value.to_ne_bytes())));
-                },
-
-                Comment | Note => (),
-
-                other => todo!("This token is not implemented yet: {:?}", other),
-
-            }
-
-        };
-
-        return (bcode, (consts, procs, structs))
+        // return (bcode, (consts, procs, structs))
 
     }
 
+    /* 
+        fn validgrm(grm: &Node) -> bool {
+
+            let valids = Self::validate(grm, ([false], false));
+            
+            valids.0.iter().all(|v| v == &true) // && valids.1
+
+        }
+
+        fn validate(grm: &Node, mut found: ([bool; 1], bool)) -> ([bool; 1], bool) {
+
+            use Node::*;
+
+            // found: [proc]
+
+            match grm {
+
+                Complex(nodes) => for node in nodes { found = Self::validate(node, found) },
+                Multiple(nodes) => for node in nodes { found = Self::validate(node, found) },
+                Optional(node) => found = Self::validate(node, found),
+                Repeat(node) => found = Self::validate(node, found),
+
+                Labeled("proc", node) => {
+                    found.0[0] = true;
+                    found = Self::validate(node, found);
+                }
+
+                Labeled(_, node) => {
+                    found.1 = false;
+                    found = Self::validate(node, found);
+                }
+
+                _ => (),
+
+            }
+
+            found
+        }
+    */
 }
 
 trait ReadToken {
@@ -102,12 +170,12 @@ impl<'a> ReadToken for Tokenstream<'a> {
         match token.kind {
 
             Kind::Integer => {
-                let integer: u64 = slice.parse().expect("The integer token is not valid.");
+                let integer: u64 = slice.parse().aborts("The integer token is not valid.");
                 Readout::Integer(integer)
             },
             
             Kind::Float => {
-                let float: f64 = slice.parse().expect("The integer token is not valid.");
+                let float: f64 = slice.parse().aborts("The integer token is not valid.");
                 Readout::Float(float)
             },
             
@@ -140,7 +208,7 @@ impl<'a> Readout<'a> {
     
     #[inline(always)]
     pub(crate) fn integer(self) -> u64 {
-        if let Self::Integer(v) = self { v } else { unreachable!("Expected the `Readout::Integer` but got {:?}", self) }
+        if let Self::Integer(v) = self { v } else { Diag::fatal(&format!("Expected the `Readout::Integer` but got {:?}", self)) }
     }
     
     // #[inline(always)]
@@ -155,7 +223,7 @@ impl<'a> Readout<'a> {
     
     #[inline(always)]
     pub(crate) fn ident(self) -> &'a str {
-        if let Self::Ident(v) = self { v } else { unreachable!("Expected the `Readout::Ident` but got {:?}", self) }
+        if let Self::Ident(v) = self { v } else { Diag::fatal(&format!("Expected the `Readout::Ident` but got {:?}", self)) }
     }
 
 }

@@ -33,7 +33,6 @@ impl Diag {
     }
 
     pub(crate) fn code(&mut self, code: &str) -> &mut Self {
-        // self.code = Some(code.lines().nth(pos.line).expect("Error position not in the source code.").into());
         self.code = Some(code.into());
         self
     }
@@ -80,6 +79,7 @@ impl Diag {
             Level::Info    => push(color!("[blue]info: ", )),
             Level::Warning => push(color!("[yellow]warning: ", )),
             Level::Error   => push(color!("[red]error: ", )),
+            Level::Fatal   => push(color!("[red]fatal: ", )),
         }
 
         push(self.message.clone());
@@ -126,6 +126,15 @@ impl Diag {
             .abort();
     }
 
+    #[track_caller]
+    pub(crate) fn fatal(text: &str) -> ! {
+        macro_rules! loc { () => { std::panic::Location::caller() }; }
+        Self::new()
+            .level(Level::Fatal)
+            .say(&color!("[245][[{}:{}]][:] {}", loc!().file(), loc!().line(), text))
+            .abort();
+    }
+
 }
 
 impl Display for Diag {
@@ -141,4 +150,27 @@ pub(crate) enum Level {
     Info,
     Warning,
     Error,
+    Fatal,
+}
+
+pub(crate) trait DiagPanic<T> {
+    fn aborts(self, msg: &str) -> T;
+}
+
+impl<T, E> DiagPanic<T> for Result<T, E> {
+    fn aborts(self, msg: &str) -> T {
+        match self {
+            Ok(v) => v,
+            Err(_) => Diag::fatal(msg),
+        }
+    }
+}
+
+impl<T> DiagPanic<T> for Option<T> {
+    fn aborts(self, msg: &str) -> T {
+        match self {
+            Some(v) => v,
+            None => Diag::fatal(msg),
+        }
+    }
 }

@@ -10,7 +10,10 @@ mod error;
 
 use std::fs::File;
 use std::io::Read;
-use error::*;
+
+pub(crate) use error::*;
+pub(crate) use lexer::*;
+pub(crate) use parser::*;
 
 fn main() {
 
@@ -28,8 +31,8 @@ fn main() {
     //     .hint("enums aren't stable yet, please consider using `std:Enum` for now")
     // .emit();
 
-    let tokens = lexer::Lexer::new(&code).build().unwrap();
-    let (code, env) = parser::Parser::new(tokens).build().unwrap();
+    let tokens = lexer::Lexer::new(&code).build().aborts("Could not generate tokens.");
+    let (code, env) = parser::Parser::new().build(tokens).aborts("Could not generate bytecode.");
 
     Diag::info("starting in simulation mode");
 
@@ -44,9 +47,9 @@ fn main() {
 }
 
 fn getcode() -> (String, String) {
-    let path = std::env::args().collect::<Vec<String>>().get(1).map(|v| v.clone()).expect("The first argument must be the file path.");
-    let mut file = File::open(&path).expect("Cannot open file.");
+    let path = std::env::args().collect::<Vec<String>>().get(1).map(|v| v.clone()).aborts("The first argument must be the file path.");
+    let mut file = File::open(&path).aborts("Could not open source file.");
     let mut code = String::new();
-    file.read_to_string(&mut code).unwrap();
+    file.read_to_string(&mut code).aborts("Could not read source file.");
     (path, code)
 }

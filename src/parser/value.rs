@@ -2,7 +2,7 @@
 use std::alloc::{alloc, dealloc, Layout};
 use std::ptr::copy_nonoverlapping as copy;
 use std::fmt::{Debug, Formatter, Result as FmtResult};
-use crate::parser::*;
+use crate::*;
 
 //* NOTE(IMPORTANT): DON'T DERIVE CLONE, IT WILL FREE TWICE AND WILL CREATE TWO POINTERS TO THE SAME DATA
 #[allow(dead_code)]
@@ -15,7 +15,7 @@ impl Value {
     
     pub(crate) fn make<const S: usize>(id: TypeID, srct: &Structure, content: [u8; S]) -> Self {
         assert!(content.len() == srct.size as usize);
-        let layout = Layout::from_size_align(srct.size as usize, srct.align as usize).expect("Invalid memory layout.");
+        let layout = Layout::from_size_align(srct.size as usize, srct.align as usize).aborts("Invalid memory layout.");
         let data = unsafe { alloc(layout) };
         unsafe { copy(content.as_ptr(), data, srct.size as usize) };
         Self { id: id, data: (data, layout) }
