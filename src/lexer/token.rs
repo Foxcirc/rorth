@@ -2,6 +2,7 @@
 use enumflags2::bitflags;
 use std::fmt::{self as format, Display, Debug, Formatter};
 use std::ops::{Deref, DerefMut};
+use crate::*;
 
 #[derive(Debug)]
 pub(crate) struct Token {
@@ -14,6 +15,10 @@ impl Token {
     
     pub(crate) fn new(kind: Tokenkind, pos: u32, length: u16) -> Self {
         Self { pos, kind, length }
+    }
+
+    pub(crate) fn is(&self, kind: Tokenkind, otherwise: &str) {
+        if self.kind != kind { Diag::error(otherwise) };
     }
 
 }

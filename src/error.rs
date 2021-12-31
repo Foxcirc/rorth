@@ -155,6 +155,7 @@ pub(crate) enum Level {
 
 pub(crate) trait DiagPanic<T> {
     fn aborts(self, msg: &str) -> T;
+    fn abortsby(self, diag: Diag) -> T;
 }
 
 impl<T, E> DiagPanic<T> for Result<T, E> {
@@ -164,6 +165,12 @@ impl<T, E> DiagPanic<T> for Result<T, E> {
             Err(_) => Diag::fatal(msg),
         }
     }
+    fn abortsby(self, diag: Diag) -> T {
+        match self {
+            Ok(v) => v,
+            Err(_) => diag.abort(),
+        }
+    }
 }
 
 impl<T> DiagPanic<T> for Option<T> {
@@ -171,6 +178,12 @@ impl<T> DiagPanic<T> for Option<T> {
         match self {
             Some(v) => v,
             None => Diag::fatal(msg),
+        }
+    }
+    fn abortsby(self, diag: Diag) -> T {
+        match self {
+            Some(v) => v,
+            None => diag.abort(),
         }
     }
 }

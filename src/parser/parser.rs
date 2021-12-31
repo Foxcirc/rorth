@@ -23,71 +23,15 @@ impl Parser {
 
     pub(crate) fn build(mut self, tokens: Tokenstream) -> Result<(Bytecode, Environment), ()> {
 
-        self.setup(Self::defgrm());
         let program = self.parse(tokens);
         Ok(program)
 
     }
 
-    fn defgrm() -> Node {
-
-        use Tokenkind::*;
-
-        /* 
-        gmr![
-            proc: ["let", ident, "proc", ?(ident || ["(", ident*, ")"]) "in" &expr* ]
-        ]
-        */
-
-        // let expr = Node::Labeled("expr", Box::new(
-        //     Node::Value("expr", Ident),
-        // ));
-
-        let proc = Node::Labeled("proc", Box::new(
-            Node::Complex(vec![
-                Node::Key("let"),
-                Node::Value("name", Ident),
-                Node::Key("proc"),
-                /* arguments */
-                Node::Optional(Box::new(Node::Multiple(vec![
-                    Node::Value("args", Ident),
-                    Node::Complex(vec![
-                        Node::Key("("),
-                        Node::Repeat(Box::new(Node::Value("args", Ident))),
-                        Node::Key(")"),
-                    ])
-                ]))),
-                /* returns */
-                Node::Optional(Box::new(Node::Complex(vec![
-                    Node::Key("-"),
-                    Node::Multiple(vec![
-                    Node::Value("rets", Ident),
-                    Node::Complex(vec![
-                        Node::Key("("),
-                        Node::Repeat(Box::new(Node::Value("rets", Ident))),
-                        Node::Key(")"),
-                    ])
-                ])]))),
-                /* body */
-                Node::Key("in"),
-                Node::Repeat(Box::new(Node::Value("expr", Ident))),
-                Node::Key("end"),
-            ]))
-        );
-
-        let grammar = Node::Multiple(vec![
-            proc,
-        ]);
-
-        grammar
-    }
-
-    pub(crate) fn setup(&mut self, grammar: Node) {
-        self.grammar = Some(grammar);
-    }
-
     pub(crate) fn parse(&self, tokens: Tokenstream) -> (Bytecode, Environment) {
         
+        const EOF: &str = "Unexpected EOF.";
+
         use Tokenkind::*;
         use Instruction as Ins;
         
@@ -100,58 +44,12 @@ impl Parser {
         let mut bcode = Bytecode::new(0);
         let consts = Constants::new();
         let procs = Procedures::new();
-        let (structs, _names) = initps![int(8, 8), bool(2, 2), ref(8, 8)];
+        let (structs, names) = initps![int(8, 8), bool(2, 2), ref(8, 8)];
 
-        // let isvalid = Self::validgrm(self.grammar.as_ref().aborts("The grammar must be set before parsing."));
-        // if !isvalid {
-        //     Diag::fatal("The grammar is not valid.");
-        // }
-
-        todo!();
-
-        // return (bcode, (consts, procs, structs))
+        return (bcode, (consts, procs, structs))
 
     }
 
-    /* 
-        fn validgrm(grm: &Node) -> bool {
-
-            let valids = Self::validate(grm, ([false], false));
-            
-            valids.0.iter().all(|v| v == &true) // && valids.1
-
-        }
-
-        fn validate(grm: &Node, mut found: ([bool; 1], bool)) -> ([bool; 1], bool) {
-
-            use Node::*;
-
-            // found: [proc]
-
-            match grm {
-
-                Complex(nodes) => for node in nodes { found = Self::validate(node, found) },
-                Multiple(nodes) => for node in nodes { found = Self::validate(node, found) },
-                Optional(node) => found = Self::validate(node, found),
-                Repeat(node) => found = Self::validate(node, found),
-
-                Labeled("proc", node) => {
-                    found.0[0] = true;
-                    found = Self::validate(node, found);
-                }
-
-                Labeled(_, node) => {
-                    found.1 = false;
-                    found = Self::validate(node, found);
-                }
-
-                _ => (),
-
-            }
-
-            found
-        }
-    */
 }
 
 trait ReadToken {
@@ -160,6 +58,7 @@ trait ReadToken {
 }
 
 impl<'a> ReadToken for Tokenstream<'a> {
+
     #[inline]
     fn read(&self, token: &Token) -> Readout {
 
@@ -190,6 +89,7 @@ impl<'a> ReadToken for Tokenstream<'a> {
 
     }
 
+    #[inline]
     fn iskwd(&self, token: &Token, name: &'static str) -> bool {
         self.read(token).ident() == name
     }
@@ -207,7 +107,7 @@ enum Readout<'a> {
 impl<'a> Readout<'a> {
     
     #[inline(always)]
-    pub(crate) fn integer(self) -> u64 {
+    pub(crate) fn int(self) -> u64 {
         if let Self::Integer(v) = self { v } else { Diag::fatal(&format!("Expected the `Readout::Integer` but got {:?}", self)) }
     }
     
