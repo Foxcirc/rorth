@@ -1,8 +1,10 @@
 
-34 35 += 420
+let main proc - int in
+    69
+end
 
 `implement:
-1. Syntax grammar (better parsing)
+1. procedures
 2. if/else
 3. structs
 4. primitive types through structs

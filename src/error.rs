@@ -11,7 +11,7 @@ pub(crate) struct Diag {
     code: Option<String>,
     pos: Option<Location>,
     file: Option<String>,
-    hints: Vec<String>,
+    notes: Vec<String>,
 }
 
 impl Diag {
@@ -23,7 +23,7 @@ impl Diag {
             code: None,
             pos: None,
             file: None,
-            hints: Vec::new(),
+            notes: Vec::new(),
         }
     }
 
@@ -47,8 +47,8 @@ impl Diag {
         self
     }
 
-    pub(crate) fn hint(&mut self, message: &str) -> &mut Self {
-        self.hints.push(message.into());
+    pub(crate) fn note(&mut self, message: &str) -> &mut Self {
+        self.notes.push(message.into());
         self
     }
 
@@ -63,13 +63,13 @@ impl Diag {
         // error: use of unstable feature `enums`
         //     at lexer/token.rh:240:96
         //     in `let Tokenkind enum {`
-        //   hint: enable this feature using `#{unstable-feature: enums}`
-        //   hint: enumerations aren't stable yet, please consider using `std:Enum` for now
+        //   note: enable this feature using `#{unstable-feature: enums}`
+        //   note: enumerations aren't stable yet, please consider using `std:Enum` for now
 
         let mut output = String::with_capacity(
             self.message.len() +
             self.code.clone().map(|s| s.len()).unwrap_or(0) +
-            self.hints.iter().map(|s| s.len()).sum::<usize>() +
+            self.notes.iter().map(|s| s.len()).sum::<usize>() +
             16
         );
 
@@ -92,8 +92,8 @@ impl Diag {
             (None, None)            => (),
         }
 
-        for hint in self.hints.clone().into_iter() {
-            push(color!("[30]  hint: [245]{}\n", hint));
+        for note in self.notes.clone().into_iter() {
+            push(color!("[30]  note: [245]{}\n", note));
         }
 
         eprint!("{}", output);
@@ -131,7 +131,7 @@ impl Diag {
         macro_rules! loc { () => { std::panic::Location::caller() }; }
         Self::new()
             .level(Level::Fatal)
-            .say(&color!("[245][[{}:{}]][:] {}", loc!().file(), loc!().line(), text))
+            .say(&color!("[red][[{}:{}]] {}", loc!().file(), loc!().line(), text))
             .abort();
     }
 
@@ -155,7 +155,7 @@ pub(crate) enum Level {
 
 pub(crate) trait DiagPanic<T> {
     fn aborts(self, msg: &str) -> T;
-    fn abortsby(self, diag: Diag) -> T;
+    fn abortsby(self, diag: &Diag) -> T;
 }
 
 impl<T, E> DiagPanic<T> for Result<T, E> {
@@ -165,7 +165,7 @@ impl<T, E> DiagPanic<T> for Result<T, E> {
             Err(_) => Diag::fatal(msg),
         }
     }
-    fn abortsby(self, diag: Diag) -> T {
+    fn abortsby(self, diag: &Diag) -> T {
         match self {
             Ok(v) => v,
             Err(_) => diag.abort(),
@@ -180,10 +180,21 @@ impl<T> DiagPanic<T> for Option<T> {
             None => Diag::fatal(msg),
         }
     }
-    fn abortsby(self, diag: Diag) -> T {
+    fn abortsby(self, diag: &Diag) -> T {
         match self {
             Some(v) => v,
             None => diag.abort(),
         }
     }
 }
+
+#[macro_export]
+macro_rules! fatal {
+    ($message:literal, $($arg:expr),+) => {
+        Diag::fatal(&format!($message, $($arg)+))
+    };
+    ($message:literal) => {
+        Diag::fatal($message)
+    };
+}
+

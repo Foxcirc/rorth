@@ -10,27 +10,26 @@ pub(crate) type StructureNames = HashMap<String /* did you know this ^^ counts f
 pub(crate) type Environment = (Constants, Procedures, Structures);
 
 pub(crate) struct Parser {
-    grammar: Option<Node>,
 }
 
 impl Parser {
     
     pub(crate) fn new() -> Self {
         
-        Self { grammar: None }
+        Self {}
 
     }
 
-    pub(crate) fn build(mut self, tokens: Tokenstream) -> Result<(Bytecode, Environment), ()> {
+    pub(crate) fn build(self, tokens: &Tokenstream) -> Result<(Bytecode, Environment), ()> {
 
         let program = self.parse(tokens);
         Ok(program)
 
     }
 
-    pub(crate) fn parse(&self, tokens: Tokenstream) -> (Bytecode, Environment) {
+    pub(crate) fn parse(&self, tokens: &Tokenstream) -> (Bytecode, Environment) {
         
-        const EOF: &str = "Unexpected EOF.";
+        const EOF: &str = "Unexpected end of file.";
 
         use Tokenkind::*;
         use Instruction as Ins;
@@ -45,6 +44,52 @@ impl Parser {
         let consts = Constants::new();
         let procs = Procedures::new();
         let (structs, names) = initps![int(8, 8), bool(2, 2), ref(8, 8)];
+
+        let mut iter = tokens.iter();
+
+        let iskwd = |token, kwd| tokens.iskwd(token, kwd);
+        let read  = |token| tokens.read(token);
+        let rawr  = |token| tokens.rawr(token);
+        let eof   = || {
+            let diag = Diag::new();
+            diag.level(Level::Error);
+            diag.say(EOF);
+            diag
+        };
+
+        loop {
+
+            let token = match iter.next() { Some(next) => next, None => break, };
+            match token.kind {
+
+                Ident if iskwd(token, "let") => {
+
+                    let token = iter.next().abortsby(&eof());
+                    if token.kind != Ident { Diag::new().level(Level::Error).say("`let` must be followed by a name").note("eg: `let hello const \"Hello world\"`").abort(); }
+                    
+                    let token = iter.next().abortsby(&eof());
+                    
+                    match token.kind {
+
+                        Ident if iskwd(token, "proc") => {
+
+                            fatal!("Found a procedure YES BABY");
+
+                        }
+
+                        _ => Diag::error(&format!("Expected `proc` but got `{:?}`", rawr(token))),
+
+                    }
+
+                },
+
+                Newline => (),
+
+                other => fatal!("Token `{:?}` is not implemented yet.", other),
+
+            }
+
+        }
 
         return (bcode, (consts, procs, structs))
 

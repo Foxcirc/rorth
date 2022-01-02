@@ -6,7 +6,7 @@ use crate::lexer::*;
 #[test]
 fn vis() {
     
-    let code = r#"´hello   +     `swsw`"#;
+    let code = r#"let main proc - int in 0 end"#;
 
     let lexer = Lexer::new(code);
     let tokens = lexer.build().unwrap();

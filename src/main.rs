@@ -32,7 +32,7 @@ fn main() {
     // .emit();
 
     let tokens = lexer::Lexer::new(&code).build().aborts("Could not generate tokens.");
-    let (code, env) = parser::Parser::new().build(tokens).aborts("Could not generate bytecode.");
+    let (code, env) = parser::Parser::new().build(&tokens).aborts("Could not generate bytecode.");
 
     Diag::info("starting in simulation mode");
 
