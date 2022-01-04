@@ -17,10 +17,6 @@ impl Token {
         Self { pos, kind, length }
     }
 
-    pub(crate) fn is(&self, kind: Tokenkind, otherwise: &str) {
-        if self.kind != kind { Diag::error(otherwise) };
-    }
-
 }
 
 #[bitflags]
@@ -69,6 +65,10 @@ pub(crate) enum Tokenkind {
     Integer,
     Float,
     Ident,
+    KeyLet,
+    KeyProc,
+    KeyIn,
+    KeyEnd,
     Literal,
     Comment,
     Note,
@@ -84,6 +84,14 @@ impl<'a> Tokenstream<'a> {
 
     pub(crate) fn new(size: usize, text: &'a str) -> Self {
         Self { tokens: Vec::with_capacity(size), text }
+    }
+
+    pub(crate) fn rawr(&self, tk: &Token) -> &'a str { // rawr <3
+        &self.text[(tk.pos as usize)..=((tk.pos + tk.length as u32) as usize - 1)]
+    }
+
+    pub(crate) fn rint(&self, tk: &Token) -> u64 {
+        self.rawr(tk).parse().aborts("Invalid integer token.")
     }
 
 }

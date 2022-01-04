@@ -1,45 +1,40 @@
 
-use crate::parser::*;
-use crate::sim::*;
+use crate::*;
 
-pub(crate) type Stack = Vec<Value>;
+pub(crate) type Stack<'a> = Vec<Value<'a>>;
 
-pub(crate) struct Simulator {
-    pub(crate) stack: Stack, // todo mabye use ´VecDeque` here, because of the rotl and rotr intrinsics
-    consts: Constants,
-    procs: Procedures,
-    structs: Structures,
+pub(crate) struct Simulator<'a> {
+    pub(crate) stack: Stack<'a>, // todo mabye use ´VecDeque` here, because of the rotl and rotr intrinsics
+    env: Environment<'a>,
     isinit: bool,
 }
 
-impl Simulator {
+impl<'a> Simulator<'a> {
 
     pub(crate) fn new() -> Self {
         Self {
             stack: Stack::new(),
-            consts: Constants::new(),
-            procs: Procedures::new(),
-            structs: Structures::new(),
+            env: Environment::blank(),
             isinit: false,
         }
     }
 
-    pub(crate) fn setup(&mut self, (consts, procs, structs): Environment) {
-        self.consts = consts;
-        self.procs = procs;
-        self.structs = structs;
+    pub(crate) fn setup(&mut self, env: Environment<'a>) {
+        self.env = env;
         self.isinit = true;
     }
 
-    pub(crate) fn run(&mut self, bcode: Bytecode) {
-
-        assert!(self.isinit);
+    pub(crate) fn run(&mut self, main: Procedure<'a>) {
 
         use Instruction::*;
 
-        for instr in bcode.instrs {
+        if !self.isinit { fatal!("The simulation environment is not initialized") };
 
-            match instr {
+        let bcode = main.body;
+
+        for op in bcode.ops {
+
+            match op {
 
                 Add => self.modify(|(b, a)| b + a),
                 Subtract => self.modify(|(b, a)| a - b), // the order here is reversed, so it is not as confusing
@@ -71,12 +66,12 @@ impl Simulator {
 
     }
 
-    pub(crate) fn pop(&mut self) -> Value {
+    pub(crate) fn pop(&mut self) -> Value<'a> {
         self.stack.pop().expect("Stack underflow while simulating.")
     }
 
-    pub(crate) fn push<const S: usize>(&mut self, id: u32, data: [u8; S]) {
-        self.stack.push(Value::make(id, &self.structs[id as usize], data));
+    pub(crate) fn push<const S: usize>(&mut self, sname: &'a str, data: [u8; S]) {
+        self.stack.push(Value::make(sname, &self.env.structs[sname], data));
     }
 
     pub(crate) fn modify<T: FromStack, R: ToStack, F: Routine<T, R>>(&mut self, routine: F) {

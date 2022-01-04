@@ -67,27 +67,31 @@ impl <'a>Lexer<'a> {
 
         match kind {
 
-            DoubleDot        => Token::new(DoubleDot,        start, 2),
-            EqualsEquals     => Token::new(EqualsEquals,     start, 2),
-            BangEquals       => Token::new(BangEquals,       start, 2),
-            OpenSharpEquals  => Token::new(OpenSharpEquals,  start, 2),
-            CloseSharpEquals => Token::new(CloseSharpEquals, start, 2),
-            MinusEquals      => Token::new(MinusEquals,      start, 2),
-            PlusEquals       => Token::new(PlusEquals,       start, 2),
-            StarEquals       => Token::new(StarEquals,       start, 2),
-            SlashEquals      => Token::new(SlashEquals,      start, 2),
-            PercentEquals    => Token::new(PercentEquals,    start, 2),
+            DoubleDot        => Token::new(kind, start, 2),
+            EqualsEquals     => Token::new(kind, start, 2),
+            BangEquals       => Token::new(kind, start, 2),
+            OpenSharpEquals  => Token::new(kind, start, 2),
+            CloseSharpEquals => Token::new(kind, start, 2),
+            MinusEquals      => Token::new(kind, start, 2),
+            PlusEquals       => Token::new(kind, start, 2),
+            StarEquals       => Token::new(kind, start, 2),
+            SlashEquals      => Token::new(kind, start, 2),
+            PercentEquals    => Token::new(kind, start, 2),
 
-            Integer          => Token::new(Integer,          start, self.len(start)),
-            Float            => Token::new(Float,            start, self.len(start)),
-            Ident            => Token::new(Ident,            start, self.len(start)),
+            Integer          => Token::new(kind, start, self.len(start)),
+            Float            => Token::new(kind, start, self.len(start)),
+            Ident            => Token::new(kind, start, self.len(start)),
+            KeyLet            => Token::new(kind, start, self.len(start)),
+            KeyIn             => Token::new(kind, start, self.len(start)),
+            KeyEnd            => Token::new(kind, start, self.len(start)),
+            KeyProc           => Token::new(kind, start, self.len(start)),
 
-            Literal          => Token::new(Literal,          start + 1, self.len(start) - 2), //? the literal doesn't include the enclosing double quotes
-            Comment          => Token::new(Comment,          start + 1, self.len(start) - 2), //? the comment doesn't include the enclosing accents
+            Literal          => Token::new(kind, start + 1, self.len(start) - 2), //? the literal doesn't include the enclosing double quotes
+            Comment          => Token::new(kind, start + 1, self.len(start) - 2), //? the comment doesn't include the enclosing accents
             
-            Note             => Token::new(Note,             start + 1, self.len(start) - 1), //? the note doesn't include opening accent
+            Note             => Token::new(kind, start + 1, self.len(start) - 1), //? the note doesn't include opening accent
 
-            other            => Token::new(other,            start, 1),
+            other            => Token::new(other, start, 1),
 
         }
 

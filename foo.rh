@@ -1,13 +1,12 @@
 
-let main proc - int in
-    69
+let main proc in
+    34 35 +=
 end
 
 `implement:
 1. procedures
-2. if/else
-3. structs
-4. primitive types through structs
-5. stack slicing
-6. intrinsics through stack slicing
+2. typechecking
+3. errors with source code location
+4. structs
+5. if/else
 `

@@ -42,7 +42,7 @@ impl Validator {
 
         /* 
             Wenn man Sperma isst, dann ist das ja eigentlich Kanibalismus...
-                -- ~~Skeletor~~ LeptiaDieWahre will come back with more disturbing facts tomorrow.
+                -- ~~Skeletor~~ Jasmina will come back with more ~~disturbing~~ fUnNy facts tomorrow.
         */
 
         use Tokenkind::*;
@@ -129,8 +129,17 @@ impl Validator {
         if chr == '`' && !old.0.contains(Literal) { flags.2 = !flags.2 };
 
         set!(flags, Note: (start && chr == '\u{00b4}') || (old.0.contains(Note) && matches!(chr, 'a'..='z' | 'A'..='Z' | '-' | '_')));
+        
+        set!(flags, KeyLet:  (start && chr == 'l') || (len == 1 && chr == 'e' && old.0.contains(KeyLet)) || (len == 2 && chr == 't') && old.0.contains(KeyLet));
+        set!(flags, KeyIn:   (start && chr == 'i') || (len == 1 && chr == 'n' && old.0.contains(KeyIn)));
+        set!(flags, KeyEnd:  (start && chr == 'e') || (len == 1 && chr == 'n' && old.0.contains(KeyEnd)) || (len == 2 && chr == 'd') && old.0.contains(KeyEnd));
+        set!(flags, KeyProc: (start && chr == 'p') || (len == 1 && chr == 'r' && old.0.contains(KeyProc)) || (len == 2 && chr == 'o') && old.0.contains(KeyProc) || (len == 3 && chr == 'c') && old.0.contains(KeyProc));
 
-        set!(flags, Ident: (start && matches!(chr, 'a'..='z' | 'A'..='Z' | '_')) | (old.0.contains(Ident) && matches!(chr, 'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_')));
+        let iskey = |f: BitFlags<Tokenkind>| -> bool { f.contains(KeyLet) || f.contains(KeyIn) || f.contains(KeyEnd) || f.contains(KeyProc) };
+        set!(flags, Ident:
+            /* not a keyword */ !iskey(flags.0) &&
+            /* valid ident */   ((start && matches!(chr, 'a'..='z' | 'A'..='Z' | '_')) || (((old.0.contains(Ident) || iskey(old.0))) && matches!(chr, 'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_')))
+        );
         
     }
 

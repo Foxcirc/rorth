@@ -14,6 +14,7 @@ use std::io::Read;
 pub(crate) use error::*;
 pub(crate) use lexer::*;
 pub(crate) use parser::*;
+pub(crate) use sim::*;
 
 fn main() {
 
@@ -32,13 +33,20 @@ fn main() {
     // .emit();
 
     let tokens = lexer::Lexer::new(&code).build().aborts("Could not generate tokens.");
-    let (code, env) = parser::Parser::new().build(&tokens).aborts("Could not generate bytecode.");
+    let mut env = parser::Parser::new().build(&tokens).aborts("Could not generate bytecode.");
+    
+    if !env.procs.contains_key("main") {
+        Diag::error("missing `main` procedure");
+    }
+
+    let main = env.procs.remove("main").aborts("must have a `main` procedure");
 
     Diag::info("starting in simulation mode");
 
     let mut sim = sim::Simulator::new();
+
     sim.setup(env);
-    sim.run(code);
+    sim.run(main);
 
     for value in sim.stack.iter() {
         println!("{:?}", value.view());

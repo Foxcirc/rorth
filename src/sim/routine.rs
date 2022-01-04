@@ -22,10 +22,10 @@ pub(crate) trait ToStack {
 }
 
 impl ToStack for () { fn push(_: Self, _: &mut Simulator) {} }
-impl ToStack for u64 { fn push(value: Self, sim: &mut Simulator) { sim.push(0, value.to_ne_bytes()); } }
-impl ToStack for (u64, u64) { fn push(value: Self, sim: &mut Simulator) { sim.push(0, value.0.to_ne_bytes()); sim.push(0, value.1.to_ne_bytes()); } }
-impl ToStack for (u64, u64, u64) { fn push(value: Self, sim: &mut Simulator) { sim.push(0, value.0.to_ne_bytes()); sim.push(0, value.1.to_ne_bytes()); sim.push(0, value.2.to_ne_bytes()); } }
-impl ToStack for (u64, u64, u64, u64) { fn push(value: Self, sim: &mut Simulator) { sim.push(0, value.0.to_ne_bytes()); sim.push(0, value.1.to_ne_bytes()); sim.push(0, value.2.to_ne_bytes()); sim.push(0, value.3.to_ne_bytes()); } }
+impl ToStack for u64 { fn push(value: Self, sim: &mut Simulator) { sim.push("int", value.to_ne_bytes()); } }
+impl ToStack for (u64, u64) { fn push(value: Self, sim: &mut Simulator) { sim.push("int", value.0.to_ne_bytes()); sim.push("int", value.1.to_ne_bytes()); } }
+impl ToStack for (u64, u64, u64) { fn push(value: Self, sim: &mut Simulator) { sim.push("int", value.0.to_ne_bytes()); sim.push("int", value.1.to_ne_bytes()); sim.push("int", value.2.to_ne_bytes()); } }
+impl ToStack for (u64, u64, u64, u64) { fn push(value: Self, sim: &mut Simulator) { sim.push("int", value.0.to_ne_bytes()); sim.push("int", value.1.to_ne_bytes()); sim.push("int", value.2.to_ne_bytes()); sim.push("int", value.3.to_ne_bytes()); } }
 
 impl FromStack for () { fn take(_: &mut Simulator) {} }
 impl FromStack for u64 { fn take(sim: &mut Simulator) -> Self { sim.pop().view() } }
