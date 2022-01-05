@@ -29,7 +29,6 @@ impl Parser {
         
         use Tokenkind::*;
         
-    
         macro_rules! initps { ($($name:ident($align:literal, $size:literal)),*) => { {
             let mut items = HashMap::new();
             $(items.insert(stringify!($name), Structure::primitive($size, $align));)*
@@ -40,21 +39,24 @@ impl Parser {
         let mut procs = Procedures::new();
         let structs = initps![int(8, 8), bool(2, 2), ref(8, 8)];
         
-
         let mut iter = tokens.iter().filter(|tk| tk.kind != Newline);
 
+        procs.insert("main", Procedure::blank());
+
+        // let expected = |e: &str, g: &str| Diag::error(&format!("expected {}, but got `{:?}`", e, g));
+
         loop {
+            break;
+            // let token = match iter.next() { Some(tk) => tk, None => break, };
+            
 
-            // todo make iter peekable and peek for efficiency
+            // match token.kind {
 
-            if let Some((name, proc)) = Procedure::parse(&mut iter, &tokens) {
-                procs.insert(name, proc);
-            }
-            else {
-                Diag::error("Could not match to any sytnax pattern.");
-            };
 
-            if iter.size_hint().1 == Some(0) { break };
+
+                // other => expected("`let`", &other.text),
+
+            // }
 
         }
 

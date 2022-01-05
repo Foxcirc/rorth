@@ -34,7 +34,7 @@ impl<'a> Bytecode<'a> {
         Self { ops: Vec::new() }
     }
 
-    pub(crate) fn parse<I: Iterator<Item = &'a Token>>(iter: &mut I, stream: &Tokenstream<'a>) -> Bytecode<'a> {
+    pub(crate) fn parse<I: Iterator<Item = &'a Token<'a>>>(iter: &mut I) -> Bytecode<'a> {
         
         use Tokenkind::*;
         use Instruction as Ins;
@@ -50,16 +50,16 @@ impl<'a> Bytecode<'a> {
                 StarEquals  => bcode.push(Ins::Multiply),
                 SlashEquals => bcode.push(Ins::Divide),
 
-                Ident if stream.rawr(token) == "dup" => bcode.push(Ins::Dup),
-                Ident if stream.rawr(token) == "swap" => bcode.push(Ins::Swap),
-                Ident if stream.rawr(token) == "over" => bcode.push(Ins::Over),
-                Ident if stream.rawr(token) == "drop" => bcode.push(Ins::Drop),
-                Ident if stream.rawr(token) == "rotl" => bcode.push(Ins::RotLeft),
-                Ident if stream.rawr(token) == "rotr" => bcode.push(Ins::RotRight),
+                Ident if token.text == "dup" => bcode.push(Ins::Dup),
+                Ident if token.text == "swap" => bcode.push(Ins::Swap),
+                Ident if token.text == "over" => bcode.push(Ins::Over),
+                Ident if token.text == "drop" => bcode.push(Ins::Drop),
+                Ident if token.text == "rotl" => bcode.push(Ins::RotLeft),
+                Ident if token.text == "rotr" => bcode.push(Ins::RotRight),
 
-                Integer => bcode.push(Ins::Push(Value::make("int", &Structure::primitive(8, 8), stream.rint(token).to_ne_bytes()))),
+                Integer => bcode.push(Ins::Push(Value::make("int", &Structure::primitive(8, 8), token.asi().to_ne_bytes()))),
 
-                _ => Diag::error(&format!("Unexpected token: `{:?}`", stream.rawr(token))),
+                _ => Diag::error(&format!("Unexpected token: `{:?}`", token.text)),
 
             }
 

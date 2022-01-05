@@ -4,7 +4,7 @@ use std::error::Error;
 
 #[derive(Debug)]
 pub(crate) enum LexError {
-    InvalidChar { chr: char, pos: u32 },
+    InvalidChar { chr: char, pos: usize },
 }
 
 impl Display for LexError {

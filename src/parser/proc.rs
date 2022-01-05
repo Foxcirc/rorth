@@ -8,14 +8,14 @@ pub(crate) struct Procedure<'a> {
 
 impl<'a> Procedure<'a> {
 
-    // pub(crate) fn blank() -> Self {
-    //     Self {
-    //         args: Vec::new(),
-    //         body: Bytecode::blank(),
-    //     }
-    // }
+    pub(crate) fn blank() -> Self {
+        Self {
+            args: Vec::new(),
+            body: Bytecode::blank(),
+        }
+    }
 
-    pub(crate) fn parse<I: Iterator<Item = &'a Token> + Clone>(iter: &mut I, stream: &'a Tokenstream) -> Option<(&'a str, Self)> {
+    pub(crate) fn parse<I: Iterator<Item = &'a Token<'a>> + Clone>(iter: &mut I) -> Option<(&'a str, Self)> {
 
         use Tokenkind::*;
 
@@ -36,7 +36,7 @@ impl<'a> Procedure<'a> {
 
             //? ident
             if idx == 1 && !(token.kind == Ident) { return None; }
-            else if idx == 1 && token.kind == Ident { name = stream.rawr(token) }
+            else if idx == 1 && token.kind == Ident { name = token.text }
             
             //? key: "proc"
             if idx == 2 && !(token.kind == KeyProc) { return None; }
@@ -49,7 +49,7 @@ impl<'a> Procedure<'a> {
             //? single arg
             else if idx == 3 && token.kind == Ident {
 
-                let sname = stream.rawr(token);
+                let sname = token.text;
                 args.push(sname);
 
                 state = State::Open;
@@ -66,7 +66,7 @@ impl<'a> Procedure<'a> {
             //? multiple args consume
             if state == State::Args && token.kind == Ident {
 
-                let sname = stream.rawr(token);
+                let sname = token.text;
                 args.push(sname);
 
             }
@@ -94,7 +94,7 @@ impl<'a> Procedure<'a> {
             if state == State::Body && token.kind == KeyEnd {
                 // idx is now the "end" of the iterator
                 let mut ranged = bodyiter.clone().enumerate().filter(|a| a.0 < (idx - start - 1)).map(|a| a.1);
-                body = Bytecode::parse(&mut ranged, &stream);
+                body = Bytecode::parse(&mut ranged);
                 
                 return Some((name, Self { args, body }));
 

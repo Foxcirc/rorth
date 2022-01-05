@@ -25,12 +25,12 @@ impl Validator {
     }
 
     #[inline(always)]
-    pub(crate) fn update(&mut self, chr: char, len: u16) {
+    pub(crate) fn update(&mut self, chr: char, len: usize) {
         Self::check(chr, len, &self.current.clone() /* can someone please edit this clone awayyy */, &mut self.current);
     }
     
     #[inline(always)]
-    pub(crate) fn peek(&mut self, chr: char, len: u16) -> usize {
+    pub(crate) fn peek(&mut self, chr: char, len: usize) -> usize {
         Self::check(chr, len, &self.current, &mut self.peek);
         self.peek.0.iter().count()
     }
@@ -38,7 +38,7 @@ impl Validator {
     /// This is the *magic* function.
     /// It decides for what token(s) the current character is valid for.
     #[inline(always)]
-    fn check(chr: char, len: u16, old: &(BitFlags<Tokenkind>, bool, bool), flags: &mut (BitFlags<Tokenkind>, bool, bool)) {
+    fn check(chr: char, len: usize, old: &(BitFlags<Tokenkind>, bool, bool), flags: &mut (BitFlags<Tokenkind>, bool, bool)) {
 
         /* 
             Wenn man Sperma isst, dann ist das ja eigentlich Kanibalismus...
